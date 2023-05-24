@@ -12,7 +12,6 @@ During this POC we will *NOT* be covering how to:
 
 ## Steps
 
-1. Clone the [ARC repository](https://github.com/actions/actions-runner-controller)
 1. Configure `kubectl` to communicate with your cluster:
 
    1. Go to the `Connect` option on your AKS cluster through the Azure portal.
