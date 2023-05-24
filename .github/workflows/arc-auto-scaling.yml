@@ -5,8 +5,7 @@ on:
 jobs:
   build:
     runs-on:
-      - self-hosted
-      - ARC
+      group: ARC
     steps:
       - name: Sleep for 5 minutes
         run: sleep 300
