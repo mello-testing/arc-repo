@@ -13,6 +13,7 @@ $scale_set_install_name = "arc-runner-set-mello-testing";
 $scale_set_namespace = "arc-runner-sets";
 $github_secret_name = "arc-secret-mello-testing";
 $github_config_url = "https://github.com/mello-testing";
+$runner_group = "default";
 $app_id = "377871";
 $app_install_id = "40850691";
 $app_private_key = (Get-Content "~/Downloads/mello-arc-poc.2023-08-18.private-key.pem" -Raw);
@@ -51,6 +52,7 @@ if ($task -eq "install") {
     --set githubConfigUrl="${github_config_url}" `
     --set githubConfigSecret="${github_secret_name}" `
     --set minRunners="${min_runners}" `
+    --set runnerGroup="${runner_group}" `
     ${arc_controller_url};
 }
 elseif ($task -eq "upgrade") {
