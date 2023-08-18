@@ -20,7 +20,7 @@ $app_private_key = (Get-Content "~/Downloads/mello-arc-poc.2023-08-18.private-ke
 $min_runners = 3;
 
 # miscellaneous other vars
-$arc_controller_url = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set";
+$arc_scale_set_url = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set";
 
 # Validate args
 if ($task -ne "delete" -and $task -ne "install" -and $task -ne "upgrade") {
@@ -34,45 +34,49 @@ Write-Host "Beginning ${task} process...";
 # For installation
 if ($task -eq "install") {
 
+  Write-Host "Installing Actions Runner Controller...";
   helm install ${arc_install_name} `
     --namespace "${arc_namespace}" `
     --create-namespace `
-   ${arc_controller_url}-controller;
+   ${arc_scale_set_url}-controller;
 
+  Write-Host "Creating namespace '${scale_set_namespace}' so we can add the secret...";
   kubectl create ns ${scale_set_namespace};
 
+  Write-Host "Creating secret '${github_secret_name}' for authentication to GitHub...";
   kubectl create secret generic ${github_secret_name} `
     --namespace="${scale_set_namespace}" `
     --from-literal=github_app_id=${app_id} `
     --from-literal=github_app_installation_id=${app_install_id} `
     --from-literal=github_app_private_key="${app_private_key}";
 
+  Write-Host "Creating scale set '${scale_set_install_name}'...";
   helm install "${scale_set_install_name}" `
     --namespace "${scale_set_namespace}" `
     --set githubConfigUrl="${github_config_url}" `
     --set githubConfigSecret="${github_secret_name}" `
     --set minRunners="${min_runners}" `
     --set runnerGroup="${runner_group}" `
-    ${arc_controller_url};
+    ${arc_scale_set_url};
 }
 elseif ($task -eq "upgrade") {
 
+  Write-Host "Applying upgrade to '${scale_set_install_name}'..."
   helm upgrade "${scale_set_install_name}" `
     --namespace "${scale_set_namespace}" `
     --set githubConfigUrl="${github_config_url}" `
     --set githubConfigSecret="${github_secret_name}" `
     --set minRunners="${min_runners}" `
-    ${arc_controller_url};
+    ${arc_scale_set_url};
 
 }
 elseif ($task -eq "delete") {
 
-    Write-Host "Deleting scale set...";
-    helm delete ${scale_set_install_name} -n "${scale_set_namespace}";
-    Write-Host "Deleting ARC...";
-    helm delete ${arc_install_name} -n "${arc_namespace}"
-    Write-Host "Deleting pods and secret...";
-    kubectl delete pods --all -n "${scale_set_namespace}"
+    Write-Host "Uninstalling scale set...";
+    helm uninstall ${scale_set_install_name} -n "${scale_set_namespace}";
+    Write-Host "Uninstalling ARC...";
+    helm uninstall ${arc_install_name} -n "${arc_namespace}"
+    Write-Host "Deleting secret...";
     kubectl delete secrets -n "${scale_set_namespace}"
     Write-Host "Process complete.";
 
